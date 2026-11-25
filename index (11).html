@@ -1,0 +1,1874 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TikTok Downloader</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface-2: #18181f;
+  --surface-3: #1f1f28;
+  --border: rgba(255,255,255,0.07);
+  --border-2: rgba(255,255,255,0.12);
+  --fg: #f0f0ff;
+  --muted: rgba(240,240,255,0.45);
+  --muted2: rgba(240,240,255,0.25);
+  --tt-red: #fe2c55;
+  --tt-cyan: #25f4ee;
+  --tt-red2: #ff0050;
+  --audio: #a78bfa;
+  --success: #4ade80;
+  --error: #f87171;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 7px;
+  --glow-r: 0 0 40px rgba(254,44,85,0.35), 0 0 80px rgba(254,44,85,0.15);
+  --glow-c: 0 0 40px rgba(37,244,238,0.2);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f0f0f8;
+    --surface: #ffffff;
+    --surface-2: #f5f5fd;
+    --surface-3: #eaeaf5;
+    --border: rgba(0,0,0,0.07);
+    --border-2: rgba(0,0,0,0.12);
+    --fg: #0a0a1a;
+    --muted: rgba(10,10,26,0.5);
+    --muted2: rgba(10,10,26,0.3);
+    --tt-red: #d6002a;
+    --tt-cyan: #008f8b;
+    --audio: #7c3aed;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f0f0f8;
+  --surface: #ffffff;
+  --surface-2: #f5f5fd;
+  --surface-3: #eaeaf5;
+  --border: rgba(0,0,0,0.07);
+  --border-2: rgba(0,0,0,0.12);
+  --fg: #0a0a1a;
+  --muted: rgba(10,10,26,0.5);
+  --muted2: rgba(10,10,26,0.3);
+  --tt-red: #d6002a;
+  --tt-cyan: #008f8b;
+  --audio: #7c3aed;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --surface-2: #18181f;
+  --surface-3: #1f1f28;
+  --border: rgba(255,255,255,0.07);
+  --border-2: rgba(255,255,255,0.12);
+  --fg: #f0f0ff;
+  --muted: rgba(240,240,255,0.45);
+  --muted2: rgba(240,240,255,0.25);
+  --tt-red: #fe2c55;
+  --tt-cyan: #25f4ee;
+  --audio: #a78bfa;
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: max(48px, env(safe-area-inset-top,0px)) max(16px, env(safe-area-inset-right,0px)) max(40px, env(safe-area-inset-bottom,0px)) max(16px, env(safe-area-inset-left,0px));
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ── Ambient background orbs ── */
+body::before, body::after {
+  content: '';
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+  opacity: 0.18;
+}
+body::before {
+  width: 500px; height: 500px;
+  background: var(--tt-red);
+  top: -150px; left: -150px;
+  animation: orbFloat1 12s ease-in-out infinite;
+}
+body::after {
+  width: 400px; height: 400px;
+  background: var(--tt-cyan);
+  bottom: -100px; right: -100px;
+  animation: orbFloat2 15s ease-in-out infinite;
+}
+@keyframes orbFloat1 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  50% { transform: translate(60px,40px) scale(1.1); }
+}
+@keyframes orbFloat2 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  50% { transform: translate(-40px,-60px) scale(1.08); }
+}
+
+.container {
+  width: 100%;
+  max-width: 540px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ══════════════ HEADER ══════════════ */
+.header {
+  text-align: center;
+  margin-bottom: 36px;
+  position: relative;
+}
+
+.header-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.icon-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(10px);
+}
+.icon-btn:hover { color: var(--fg); border-color: var(--tt-red); }
+.icon-btn svg { width: 17px; height: 17px; fill: currentColor; }
+
+/* Logo sticker */
+.logo-sticker {
+  display: inline-block;
+  margin-bottom: 20px;
+  position: relative;
+  animation: logoBob 3s ease-in-out infinite;
+}
+@keyframes logoBob {
+  0%,100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
+}
+
+.logo-bg {
+  width: 76px; height: 76px;
+  background: linear-gradient(135deg, var(--tt-red), #ff0050);
+  border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--glow-r), 0 2px 0 rgba(0,0,0,0.3);
+  position: relative;
+  overflow: hidden;
+}
+.logo-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+}
+.logo-bg svg { width: 36px; height: 36px; fill: #fff; position: relative; z-index: 1; }
+
+/* Sparkle dots around logo */
+.logo-sticker::before, .logo-sticker::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  animation: sparklePop 2s ease-in-out infinite;
+}
+.logo-sticker::before {
+  width: 8px; height: 8px;
+  background: var(--tt-cyan);
+  top: -4px; right: -4px;
+  box-shadow: 0 0 10px var(--tt-cyan);
+  animation-delay: 0.5s;
+}
+.logo-sticker::after {
+  width: 6px; height: 6px;
+  background: var(--tt-red);
+  bottom: 4px; left: -6px;
+  box-shadow: 0 0 8px var(--tt-red);
+}
+@keyframes sparklePop {
+  0%,100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--fg) 0%, var(--muted) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+
+/* Counter pill */
+.counter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(254,44,85,0.15), rgba(255,0,80,0.08));
+  border: 1px solid rgba(254,44,85,0.3);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--tt-red);
+  animation: pillPulse 3s ease-in-out infinite;
+}
+@keyframes pillPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(254,44,85,0.3); }
+  50% { box-shadow: 0 0 0 4px rgba(254,44,85,0); }
+}
+.counter-pill .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--tt-red);
+  animation: dotBlink 1.5s ease-in-out infinite;
+}
+@keyframes dotBlink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ══════════════ INPUT CARD ══════════════ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(254,44,85,0.04) 0%, rgba(37,244,238,0.02) 100%);
+  pointer-events: none;
+}
+.card:focus-within { border-color: rgba(254,44,85,0.4); }
+
+.input-row { display: flex; gap: 8px; }
+
+.input-wrap { flex: 1; position: relative; display: flex; }
+
+.url-input {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.875rem;
+  padding: 12px 44px 12px 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: var(--tt-red);
+}
+.url-input::placeholder { color: var(--muted2); }
+.url-input:focus {
+  border-color: var(--tt-red);
+  box-shadow: 0 0 0 3px rgba(254,44,85,0.1);
+}
+
+.paste-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 5px;
+  transition: color 0.15s, transform 0.15s;
+}
+.paste-btn:hover { color: var(--tt-red); transform: translateY(-50%) scale(1.15); }
+.paste-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+/* Main button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, var(--tt-red), #d6002a);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 12px 22px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(254,44,85,0.4);
+}
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+}
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(254,44,85,0.5);
+}
+.btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+.status {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-height: 1em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status.error { color: var(--error); }
+
+/* ══════════════ RESULT CARD ══════════════ */
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  animation: cardReveal 0.4s cubic-bezier(0.16,1,0.3,1);
+  position: relative;
+}
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Video area */
+.video-wrap {
+  background: #000;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: 200px;
+}
+.video-wrap video {
+  width: 100%;
+  max-height: 460px;
+  display: block;
+  object-fit: contain;
+}
+.thumb-fallback { width: 100%; display: block; object-fit: cover; max-height: 320px; }
+
+/* Floating badges on video */
+.video-badge {
+  position: absolute;
+  backdrop-filter: blur(10px);
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.05em;
+}
+.hd-badge {
+  top: 10px; right: 10px;
+  background: linear-gradient(135deg, rgba(37,244,238,0.4), rgba(37,244,238,0.2));
+  border-color: rgba(37,244,238,0.4);
+  color: var(--tt-cyan);
+  animation: hdShine 2s ease-in-out infinite;
+}
+@keyframes hdShine {
+  0%,100% { box-shadow: 0 0 0 0 rgba(37,244,238,0.4); }
+  50% { box-shadow: 0 0 10px rgba(37,244,238,0.6); }
+}
+.duration-badge { bottom: 10px; right: 10px; }
+
+/* ── Info section ── */
+.video-info { padding: 18px 20px 20px; }
+
+.author-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.author-link {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: inherit;
+  min-width: 0; flex: 1;
+  transition: opacity 0.15s;
+}
+.author-link:hover { opacity: 0.8; }
+
+.author-pic {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--surface-2);
+  border: 2px solid var(--border-2);
+  transition: border-color 0.2s;
+}
+.author-link:hover .author-pic { border-color: var(--tt-red); }
+
+.author-handle {
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.author-name-full {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.video-desc {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--fg);
+  margin-bottom: 16px;
+  word-break: break-word;
+}
+.hashtag {
+  color: var(--tt-red);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+.hashtag:hover { opacity: 0.75; }
+.desc-toggle {
+  display: inline;
+  background: none; border: none;
+  color: var(--muted); font-size: 0.8rem;
+  cursor: pointer; padding: 0;
+  font-family: inherit; margin-left: 4px;
+  transition: color 0.15s;
+}
+.desc-toggle:hover { color: var(--fg); }
+
+/* ── Download sticker buttons ── */
+.download-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.dl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 11px 10px;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.01em;
+}
+.dl-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%);
+}
+.dl-btn:hover { transform: translateY(-2px); }
+.dl-btn:active { transform: scale(0.97); }
+
+/* Sticker button: no watermark */
+.dl-nowm {
+  background: linear-gradient(135deg, var(--tt-red), #cc0040);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(254,44,85,0.35);
+  grid-column: 1 / -1;
+}
+.dl-nowm:hover { box-shadow: 0 6px 24px rgba(254,44,85,0.5); }
+
+/* With watermark */
+.dl-wm {
+  background: var(--surface-2);
+  border: 1.5px solid var(--border-2);
+  color: var(--fg);
+}
+.dl-wm:hover { border-color: var(--border-2); background: var(--surface-3); }
+
+/* Audio */
+.dl-audio {
+  background: linear-gradient(135deg, rgba(167,139,250,0.2), rgba(139,92,246,0.1));
+  border: 1.5px solid rgba(167,139,250,0.3);
+  color: var(--audio);
+  box-shadow: 0 2px 10px rgba(167,139,250,0.15);
+}
+.dl-audio:hover { box-shadow: 0 4px 16px rgba(167,139,250,0.3); border-color: rgba(167,139,250,0.5); }
+
+/* Copy link */
+.copy-btn {
+  background: var(--surface-3);
+  border: 1.5px solid var(--border-2);
+  color: var(--muted);
+}
+.copy-btn:hover { color: var(--fg); border-color: var(--border-2); }
+.copy-btn.copied {
+  background: linear-gradient(135deg, rgba(74,222,128,0.15), rgba(34,197,94,0.08));
+  border-color: rgba(74,222,128,0.4);
+  color: var(--success);
+}
+
+/* Sticker icons - kept for stat-sticker */
+
+/* ── Stats bar ── */
+.stats-bar {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.stats-bar::-webkit-scrollbar { display: none; }
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 12px 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  border-right: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.stat-item:last-child { border-right: none; }
+.stat-item:hover { background: var(--surface-2); }
+.stat-sticker { font-size: 1.1rem; line-height: 1; }
+.stat-val {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--fg);
+}
+
+/* ══════════════ HISTORY ══════════════ */
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.section-label button {
+  background: none; border: none;
+  font-size: 0.72rem; font-family: inherit;
+  color: var(--muted); cursor: pointer;
+  transition: color 0.15s; letter-spacing: 0;
+  text-transform: none;
+}
+.section-label button:hover { color: var(--error); }
+
+.history-section { margin-top: 20px; }
+.history-list { display: flex; flex-direction: column; gap: 8px; }
+
+.history-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  color: inherit;
+  position: relative;
+  overflow: hidden;
+}
+.history-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, var(--tt-red), var(--tt-cyan));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.history-item:hover { border-color: rgba(254,44,85,0.3); transform: translateX(3px); }
+.history-item:hover::before { opacity: 1; }
+
+.history-thumb {
+  width: 46px; height: 46px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--surface-2);
+}
+.history-info { min-width: 0; flex: 1; }
+.history-author { font-size: 0.82rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-desc { font-size: 0.72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+.history-arrow { color: var(--muted2); font-size: 1rem; flex-shrink: 0; transition: transform 0.2s; }
+.history-item:hover .history-arrow { transform: translateX(3px); color: var(--tt-red); }
+
+/* ══════════════ SUGGESTIONS ══════════════ */
+.suggestions-section { margin-top: 20px; }
+.suggestions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.suggestion-card {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+.suggestion-card:hover { border-color: rgba(254,44,85,0.35); transform: translateY(-2px); background: var(--surface-2); }
+.suggestion-icon { font-size: 1.5rem; display: block; margin-bottom: 6px; }
+.suggestion-title { font-size: 0.82rem; font-weight: 700; margin-bottom: 2px; }
+.suggestion-desc { font-size: 0.72rem; color: var(--muted); line-height: 1.4; }
+
+/* ══════════════ PHOTO CAROUSEL ══════════════ */
+.carousel-wrap {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.carousel-track {
+  display: flex;
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  width: 100%;
+}
+.carousel-slide {
+  min-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+.carousel-slide img {
+  width: 100%;
+  max-height: 460px;
+  object-fit: contain;
+  display: block;
+}
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 1.1rem;
+  z-index: 5;
+  transition: background 0.2s, transform 0.2s;
+  backdrop-filter: blur(6px);
+}
+.carousel-btn:hover { background: rgba(254,44,85,0.7); transform: translateY(-50%) scale(1.1); }
+.carousel-btn.prev { left: 10px; }
+.carousel-btn.next { right: 10px; }
+.carousel-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 5;
+}
+.carousel-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  transition: background 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.carousel-dot.active { background: var(--tt-red); transform: scale(1.3); }
+.carousel-counter {
+  position: absolute;
+  top: 10px; left: 10px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 7px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+  backdrop-filter: blur(10px);
+  z-index: 5;
+}
+.photo-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: linear-gradient(135deg, rgba(37,244,238,0.4), rgba(37,244,238,0.2));
+  border: 1px solid rgba(37,244,238,0.4);
+  border-radius: 7px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--tt-cyan);
+  backdrop-filter: blur(10px);
+  z-index: 5;
+}
+.dl-photos {
+  background: linear-gradient(135deg, rgba(37,244,238,0.18), rgba(37,244,238,0.08));
+  border: 1.5px solid rgba(37,244,238,0.35);
+  color: var(--tt-cyan);
+  box-shadow: 0 2px 10px rgba(37,244,238,0.1);
+  grid-column: 1 / -1;
+}
+.dl-photos:hover { box-shadow: 0 4px 16px rgba(37,244,238,0.25); border-color: rgba(37,244,238,0.6); }
+
+.dl-all-photos {
+  background: linear-gradient(135deg, rgba(37,244,238,0.22), rgba(37,244,238,0.1));
+  border: 1.5px solid rgba(37,244,238,0.5);
+  color: var(--tt-cyan);
+  box-shadow: 0 4px 16px rgba(37,244,238,0.18);
+  grid-column: 1 / -1;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+.dl-all-photos:hover { box-shadow: 0 6px 24px rgba(37,244,238,0.35); border-color: rgba(37,244,238,0.8); transform: translateY(-2px); }
+.dl-all-photos:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ══════════════ SPINNER ══════════════ */
+@keyframes spin { to { transform: rotate(360deg) } }
+.spinner {
+  width: 15px; height: 15px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+.tip {
+  margin-top: 16px;
+  font-size: 0.75rem;
+  color: var(--muted2);
+  text-align: center;
+  line-height: 1.5;
+}
+
+[hidden] { display: none !important }
+
+/* ══════════════ WATERMARK ══════════════ */
+.wm-btn {
+  background: linear-gradient(135deg, rgba(167,139,250,0.22), rgba(109,40,217,0.14));
+  border: 1.5px solid rgba(167,139,250,0.4);
+  color: #c4b5fd;
+  box-shadow: 0 2px 10px rgba(167,139,250,0.15);
+  grid-column: 1 / -1;
+  display: none;
+}
+.wm-btn:hover { box-shadow: 0 4px 18px rgba(167,139,250,0.35); border-color: rgba(167,139,250,0.65); }
+.wm-btn.active {
+  background: linear-gradient(135deg, rgba(167,139,250,0.4), rgba(109,40,217,0.3));
+  border-color: rgba(167,139,250,0.8);
+  color: #fff;
+}
+
+.wm-panel {
+  display: none;
+  background: var(--surface-2);
+  border: 1px solid rgba(167,139,250,0.25);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-top: 10px;
+  gap: 12px;
+  flex-direction: column;
+  animation: panelIn 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+.wm-panel.open { display: flex; }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.wm-panel label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.wm-text-input {
+  width: 100%;
+  background: var(--surface-3);
+  border: 1.5px solid var(--border-2);
+  border-radius: var(--radius-xs);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: #c4b5fd;
+}
+.wm-text-input:focus {
+  border-color: rgba(167,139,250,0.6);
+  box-shadow: 0 0 0 3px rgba(167,139,250,0.1);
+}
+
+.wm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.wm-select {
+  width: 100%;
+  background: var(--surface-3);
+  border: 1.5px solid var(--border-2);
+  border-radius: var(--radius-xs);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.8rem;
+  padding: 8px 10px;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.wm-select:focus { border-color: rgba(167,139,250,0.6); }
+
+.wm-opacity-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wm-opacity-wrap input[type=range] {
+  flex: 1;
+  accent-color: #a78bfa;
+  height: 4px;
+  cursor: pointer;
+}
+.wm-opacity-val {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #c4b5fd;
+  min-width: 32px;
+  text-align: right;
+}
+
+.wm-colors {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.wm-color-dot {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+.wm-color-dot:hover { transform: scale(1.18); }
+.wm-color-dot.selected { border-color: #fff; transform: scale(1.15); }
+
+.wm-apply-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: linear-gradient(135deg, #7c3aed, #a78bfa);
+  border: none;
+  border-radius: var(--radius-xs);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(124,58,237,0.4);
+  letter-spacing: 0.02em;
+}
+.wm-apply-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(124,58,237,0.55);
+}
+.wm-apply-btn:active { transform: scale(0.97); }
+
+.wm-dl-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: linear-gradient(135deg, #059669, #10b981);
+  border: none;
+  border-radius: var(--radius-xs);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(5,150,105,0.4);
+  letter-spacing: 0.02em;
+  width: 100%;
+  text-align: center;
+  margin-top: 4px;
+}
+.wm-dl-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(5,150,105,0.5);
+}
+.wm-dl-btn.show { display: flex; }
+
+/* Canvas overlay */
+#wm-canvas-wrap {
+  position: relative;
+  display: none;
+  background: #000;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+#wm-canvas-wrap.show { display: flex; }
+#wm-canvas {
+  width: 100%;
+  max-height: 460px;
+  object-fit: contain;
+  display: block;
+}
+.wm-preview-badge {
+  position: absolute;
+  top: 10px; left: 10px;
+  background: linear-gradient(135deg, rgba(167,139,250,0.5), rgba(109,40,217,0.4));
+  border: 1px solid rgba(167,139,250,0.5);
+  border-radius: 7px;
+  padding: 3px 9px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.06em;
+  backdrop-filter: blur(8px);
+}
+
+
+/* ── Conectar con TikTok ── */
+.header-actions{align-items:center;gap:10px}
+.tt-connect{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:999px;border:1px solid var(--border-2);background:var(--surface);color:var(--fg);font:700 .8rem 'Inter',system-ui,sans-serif;cursor:pointer;transition:all .2s}
+.tt-connect:hover{border-color:var(--tt-red);box-shadow:var(--glow-r)}
+.tt-connect svg{width:15px;height:15px;fill:var(--tt-red)}
+.tt-user{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 4px;border-radius:999px;border:1px solid var(--border-2);background:var(--surface);font-size:.8rem;font-weight:600}
+.tt-user img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.tt-user button{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 8px}
+.tt-user button:hover{color:var(--tt-red)}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-actions">
+      <button class="tt-connect" id="tt-connect" onclick="ttConnect()"><svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.84a8.14 8.14 0 004.77 1.52V6.9a4.85 4.85 0 01-1-.21z"/></svg><span>Conectar con TikTok</span></button>
+      <div class="tt-user" id="tt-user" hidden><img id="tt-avatar" alt=""><span id="tt-name"></span><button onclick="ttLogout()" title="Desconectar">×</button></div>
+      <button class="icon-btn" onclick="toggleTheme()" title="Cambiar tema" id="theme-btn">
+        <svg id="ico-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        <svg id="ico-sun" viewBox="0 0 24 24" hidden><path d="M12 7a5 5 0 100 10A5 5 0 0012 7zm0-5a1 1 0 011 1v1a1 1 0 01-2 0V3a1 1 0 011-1zm0 17a1 1 0 011 1v1a1 1 0 01-2 0v-1a1 1 0 011-1zm8.66-13.5a1 1 0 010 1.41l-.71.71a1 1 0 01-1.41-1.41l.71-.71a1 1 0 011.41 0zM6.05 17.95a1 1 0 010 1.41l-.71.71a1 1 0 01-1.41-1.41l.71-.71a1 1 0 011.41 0zM22 12a1 1 0 01-1 1h-1a1 1 0 010-2h1a1 1 0 011 1zM4 12a1 1 0 01-1 1H2a1 1 0 010-2h1a1 1 0 011 1zm14.95 5.95a1 1 0 011.41 0l.71.71a1 1 0 01-1.41 1.41l-.71-.71a1 1 0 010-1.41zM5.34 7.05a1 1 0 01-1.41 0l-.71-.71A1 1 0 014.63 4.93l.71.71a1 1 0 010 1.41z"/></svg>
+      </button>
+    </div>
+
+    <div class="logo-sticker">
+      <div class="logo-bg">
+        <svg viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.84a8.14 8.14 0 004.77 1.52V6.9a4.85 4.85 0 01-1-.21z"/></svg>
+      </div>
+    </div>
+
+    <h1>TikTok Downloader</h1>
+    <p class="subtitle">Pega un enlace · descarga sin marca de agua</p>
+
+    <div class="counter-pill" id="counter-pill" hidden>
+      <span class="dot"></span>
+      <span id="counter-text">0 descargados</span>
+    </div>
+  </header>
+
+  <!-- INPUT CARD -->
+  <div class="card">
+    <div class="input-row">
+      <div class="input-wrap">
+        <input
+          class="url-input"
+          id="url-input"
+          type="text"
+          placeholder="https://www.tiktok.com/@usuario/video/..."
+          autocomplete="off" autocorrect="off" spellcheck="false"
+        >
+        <button class="paste-btn" onclick="pasteClipboard()" title="Pegar desde portapapeles">
+          <svg viewBox="0 0 24 24"><path d="M19 2h-4.18C14.4.84 13.3 0 12 0S9.6.84 9.18 2H5a2 2 0 00-2 2v16a2 2 0 002 2h14a2 2 0 002-2V4a2 2 0 00-2-2zm-7 0a1 1 0 110 2 1 1 0 010-2zm7 18H5V4h2v3h10V4h2v16z"/></svg>
+        </button>
+      </div>
+      <button class="btn" id="fetch-btn" onclick="fetchVideo()">
+        Descargar
+      </button>
+    </div>
+    <div class="status" id="status" aria-live="polite"></div>
+  </div>
+
+  <!-- RESULT CARD -->
+  <div class="result-card" id="result" hidden>
+    <div class="video-wrap" id="video-wrap">
+      <video id="video-player" controls playsinline preload="metadata"></video>
+      <span class="video-badge hd-badge" id="hd-badge" hidden>✦ HD</span>
+      <span class="video-badge duration-badge" id="dur-badge" hidden></span>
+    </div>
+    <!-- video-wrap contents are replaced dynamically for photos vs video -->
+
+    <div class="video-info">
+      <div class="author-row">
+        <a class="author-link" id="author-link" href="#" target="_blank" rel="noopener">
+          <img class="author-pic" id="author-pic" src="" alt="">
+          <div>
+            <div class="author-handle" id="author-handle"></div>
+            <div class="author-name-full" id="author-nickname"></div>
+          </div>
+        </a>
+      </div>
+
+      <div class="video-desc" id="video-desc"></div>
+
+      <div class="download-buttons">
+        <a class="dl-btn dl-nowm" id="dl-nowm" href="#" target="_blank" rel="noopener">
+          Sin marca de agua
+        </a>
+        <a class="dl-btn dl-wm" id="dl-wm" href="#" target="_blank" rel="noopener">
+          Con marca
+        </a>
+        <a class="dl-btn dl-audio" id="dl-audio" href="#" target="_blank" rel="noopener">
+          Audio MP3
+        </a>
+        <button class="dl-btn copy-btn" id="copy-btn" onclick="copyLink()">
+          <span id="copy-text">Copiar enlace</span>
+        </button>
+        <button class="dl-btn dl-all-photos" id="dl-all-photos" onclick="downloadAllPhotos()" style="display:none">
+          Descargar todas las fotos
+        </button>
+
+        <!-- WATERMARK BUTTON -->
+        <button class="dl-btn wm-btn" id="wm-toggle-btn" onclick="toggleWmPanel()">
+          ✦ Ponerle tu marca de agua
+        </button>
+      </div>
+
+      <!-- WATERMARK PANEL -->
+      <div class="wm-panel" id="wm-panel">
+        <div>
+          <label>Tu nombre o texto</label>
+          <input class="wm-text-input" id="wm-text" type="text" placeholder="@tunombre · tu marca · lo que quieras" maxlength="60" oninput="wmPreviewLive()">
+        </div>
+        <div class="wm-row">
+          <div>
+            <label>Estilo de letra</label>
+            <select class="wm-select" id="wm-font" onchange="wmPreviewLive()">
+              <option value="'Inter',sans-serif">Inter (moderno)</option>
+              <option value="Georgia,serif">Georgia (elegante)</option>
+              <option value="'Courier New',monospace">Courier (retro)</option>
+              <option value="Impact,sans-serif">Impact (potente)</option>
+              <option value="'Arial Black',sans-serif">Arial Black</option>
+              <option value="'Trebuchet MS',sans-serif">Trebuchet</option>
+            </select>
+          </div>
+          <div>
+            <label>Tamaño</label>
+            <select class="wm-select" id="wm-size" onchange="wmPreviewLive()">
+              <option value="28">Pequeño</option>
+              <option value="38" selected>Mediano</option>
+              <option value="52">Grande</option>
+              <option value="68">Extra grande</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label>Color del texto</label>
+          <div class="wm-colors" id="wm-colors">
+            <div class="wm-color-dot selected" data-color="#ffffff" style="background:#ffffff;border-color:#666" onclick="selectWmColor(this,'#ffffff')"></div>
+            <div class="wm-color-dot" data-color="#fe2c55" style="background:#fe2c55" onclick="selectWmColor(this,'#fe2c55')"></div>
+            <div class="wm-color-dot" data-color="#25f4ee" style="background:#25f4ee" onclick="selectWmColor(this,'#25f4ee')"></div>
+            <div class="wm-color-dot" data-color="#a78bfa" style="background:#a78bfa" onclick="selectWmColor(this,'#a78bfa')"></div>
+            <div class="wm-color-dot" data-color="#fbbf24" style="background:#fbbf24" onclick="selectWmColor(this,'#fbbf24')"></div>
+            <div class="wm-color-dot" data-color="#34d399" style="background:#34d399" onclick="selectWmColor(this,'#34d399')"></div>
+            <div class="wm-color-dot" data-color="#f97316" style="background:#f97316" onclick="selectWmColor(this,'#f97316')"></div>
+            <div class="wm-color-dot" data-color="#000000" style="background:#111;border:2px solid #444" onclick="selectWmColor(this,'#000000')"></div>
+          </div>
+        </div>
+        <div>
+          <label>Opacidad</label>
+          <div class="wm-opacity-wrap">
+            <input type="range" id="wm-opacity" min="20" max="100" value="75" oninput="wmOpacityUpdate()">
+            <span class="wm-opacity-val" id="wm-opacity-val">75%</span>
+          </div>
+        </div>
+        <button class="wm-apply-btn" onclick="applyWatermark()">✦ Aplicar marca de agua</button>
+        <button class="wm-dl-btn" id="wm-dl-btn" onclick="downloadWatermarked()">⬇ Descargar con mi marca</button>
+      </div>
+
+      <!-- CANVAS PREVIEW (marca de agua aplicada) -->
+      <div id="wm-canvas-wrap">
+        <canvas id="wm-canvas"></canvas>
+        <span class="wm-preview-badge">VISTA PREVIA</span>
+      </div>
+
+    </div>
+
+
+    <div class="stats-bar" id="stats-bar"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-section" id="history-section" hidden>
+    <div class="section-label">
+      Recientes
+      <button onclick="clearHistory()">Limpiar todo</button>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+
+  <!-- SUGGESTIONS -->
+  <div class="suggestions-section" id="suggestions-section">
+    <div class="section-label">¿Sabías que puedes...?</div>
+    <div class="suggestions-grid">
+      <div class="suggestion-card" onclick="showTip('paste')">
+        <div class="suggestion-title">Pegar automático</div>
+        <div class="suggestion-desc">Pulsa el icono de pegar y se pega y descarga solo</div>
+      </div>
+      <div class="suggestion-card" onclick="showTip('audio')">
+        <div class="suggestion-title">Extraer el audio</div>
+        <div class="suggestion-desc">Descarga solo la música del vídeo</div>
+      </div>
+      <div class="suggestion-card" onclick="showTip('history')">
+        <div class="suggestion-title">Historial guardado</div>
+        <div class="suggestion-desc">Tus últimas descargas se recuerdan</div>
+      </div>
+      <div class="suggestion-card" onclick="showTip('copy')">
+        <div class="suggestion-title">Copiar enlace directo</div>
+        <div class="suggestion-desc">Link directo al MP4 sin marca de agua</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="tip">Abre el enlace en nueva pestaña · menú del navegador → Guardar vídeo</p>
+</div>
+
+<p style="text-align:center;margin:32px 0 8px;font-size:.78rem;opacity:.6;position:relative;z-index:1"><a href="terms.html" style="color:inherit">Términos</a> · <a href="privacy.html" style="color:inherit">Privacidad</a></p>
+<script>
+const API = 'https://www.tikwm.com/api/';
+let noWmUrl = '';
+let dlCount = 0;
+
+/* ── Theme ── */
+(function(){
+  const t = localStorage.getItem('tt-theme');
+  if (t) { document.documentElement.setAttribute('data-theme', t); syncThemeIcon(t); }
+})();
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme') ||
+    (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const nxt = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', nxt);
+  localStorage.setItem('tt-theme', nxt);
+  syncThemeIcon(nxt);
+}
+function syncThemeIcon(t){
+  document.getElementById('ico-moon').hidden = t === 'light';
+  document.getElementById('ico-sun').hidden  = t === 'dark';
+}
+
+/* ── Counter ── */
+(function(){
+  dlCount = parseInt(localStorage.getItem('tt-count')||'0',10);
+  if(dlCount>0) updateCounter();
+})();
+function updateCounter(){
+  document.getElementById('counter-text').textContent =
+    dlCount + (dlCount===1?' descargado':' descargados');
+  document.getElementById('counter-pill').hidden = false;
+}
+
+/* ── Paste ── */
+async function pasteClipboard(){
+  try {
+    const t = await navigator.clipboard.readText();
+    const inp = document.getElementById('url-input');
+    inp.value = t;
+    if(/tiktok\.com|vm\.tiktok|vt\.tiktok/i.test(t)) fetchVideo();
+  } catch { setStatus('No se pudo acceder al portapapeles. Pega manualmente.','error'); }
+}
+
+/* ── Copy link ── */
+function copyLink(){
+  if(!noWmUrl) return;
+  navigator.clipboard.writeText(noWmUrl).then(()=>{
+    const btn = document.getElementById('copy-btn');
+    const tx  = document.getElementById('copy-text');
+    btn.classList.add('copied');
+    tx.textContent = '¡Copiado!';
+    setTimeout(()=>{
+      btn.classList.remove('copied');
+      tx.textContent = 'Copiar enlace';
+    }, 2200);
+  }).catch(()=>setStatus('No se pudo copiar.','error'));
+}
+
+/* ── History ── */
+function getHistory(){ try{ return JSON.parse(localStorage.getItem('tt-history')||'[]'); }catch{return[];} }
+function addHistory(data){
+  let h = getHistory();
+  const url = document.getElementById('url-input').value.trim();
+  h = h.filter(x=>x.url!==url);
+  h.unshift({
+    url, thumb: data.cover||'',
+    author: data.author?.unique_id ? '@'+data.author.unique_id : '',
+    desc: data.title||'', noWm: data.play||data.hdplay||''
+  });
+  localStorage.setItem('tt-history', JSON.stringify(h.slice(0,8)));
+  renderHistory();
+}
+function renderHistory(){
+  const h = getHistory();
+  const sec = document.getElementById('history-section');
+  const list = document.getElementById('history-list');
+  if(!h.length){ sec.hidden=true; return; }
+  sec.hidden = false;
+  list.innerHTML = h.map((x,i)=>`
+    <button class="history-item" onclick="loadHistory(${i})">
+      <img class="history-thumb" src="${esc(x.thumb)}" alt="" onerror="this.style.display='none'">
+      <div class="history-info">
+        <div class="history-author">${esc(x.author)||'Sin autor'}</div>
+        <div class="history-desc">${esc(x.desc)||'Sin descripción'}</div>
+      </div>
+      <span class="history-arrow">›</span>
+    </button>`).join('');
+}
+function loadHistory(i){ const h=getHistory()[i]; if(!h) return; document.getElementById('url-input').value=h.url; fetchVideo(); }
+function clearHistory(){ localStorage.removeItem('tt-history'); renderHistory(); }
+
+/* ── Tips ── */
+function showTip(t){
+  const msgs = {
+    paste: 'Pulsa el icono de pegar junto al input. Si hay una URL de TikTok en tu portapapeles la descarga sola.',
+    audio: 'Tras descargar el vídeo aparece el botón Audio MP3 que extrae solo la música.',
+    history: 'Las últimas 8 descargas se guardan en el historial de abajo.',
+    copy: 'El botón Copiar enlace te da la URL directa al MP4 sin marca de agua.'
+  };
+  setStatus(msgs[t], 'info');
+}
+
+/* ── Fetch ── */
+async function fetchVideo(){
+  const inp    = document.getElementById('url-input');
+  const btn    = document.getElementById('fetch-btn');
+  const result = document.getElementById('result');
+  const raw    = inp.value.trim();
+
+  if(!raw){ setStatus('Pega un enlace de TikTok primero.','error'); return; }
+  if(!/tiktok\.com|vm\.tiktok|vt\.tiktok/i.test(raw)){
+    setStatus('El enlace no parece ser de TikTok.','error'); return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Procesando…';
+  result.hidden = true;
+  setStatus('Contactando con el servidor…','info');
+
+  const ctrl = new AbortController();
+  const tmr  = setTimeout(()=>ctrl.abort(), 15000);
+
+  try {
+    const res  = await fetch(API,{ method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body: new URLSearchParams({url:raw, hd:'1'}), signal:ctrl.signal });
+    clearTimeout(tmr);
+    if(!res.ok) throw new Error('Error del servidor ('+res.status+')');
+    const json = await res.json();
+    if(!json||json.code!==0) throw new Error(json?.msg||'No se pudo obtener el vídeo.');
+
+    renderResult(json.data);
+    dlCount++; localStorage.setItem('tt-count',dlCount); updateCounter();
+    addHistory(json.data);
+    setStatus('','info');
+    result.hidden = false;
+    result.scrollIntoView({behavior:'smooth', block:'nearest'});
+    inp.value = '';
+  } catch(err){
+    clearTimeout(tmr);
+    if(err.name==='AbortError') setStatus('Tiempo agotado. Inténtalo de nuevo.','error');
+    else if(err.name==='TypeError'&&err.message.includes('fetch')) setStatus('Sin conexión. Comprueba tu red.','error');
+    else setStatus(err.message||'Error inesperado.','error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Descargar';
+  }
+}
+
+/* ── Render ── */
+function renderResult(data){
+  const isPhoto = Array.isArray(data.images) && data.images.length > 0;
+
+  if(isPhoto){
+    renderPhotoCarousel(data);
+  } else {
+    renderVideo(data);
+  }
+
+  /* Author */
+  const a = data.author||{};
+  document.getElementById('author-pic').src = a.avatar||'';
+  document.getElementById('author-handle').textContent = a.unique_id?'@'+a.unique_id:'';
+  document.getElementById('author-nickname').textContent = a.nickname||'';
+  document.getElementById('author-link').href = a.unique_id?'https://www.tiktok.com/@'+a.unique_id:'#';
+
+  /* Desc */
+  const descEl = document.getElementById('video-desc');
+  const rawDesc = data.title||'';
+  const MAX = 160;
+  const short = rawDesc.length>MAX;
+  const display = short?rawDesc.slice(0,MAX):rawDesc;
+  const escaped = display.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const linked = escaped.replace(/#(\w+)/g,(_,tag)=>`<a class="hashtag" href="https://www.tiktok.com/tag/${tag}" target="_blank" rel="noopener">#${tag}</a>`);
+  descEl.innerHTML = linked + (short?` <button class="desc-toggle" data-full="${esc(rawDesc)}" onclick="expandDesc(this)">… ver más</button>`:'');
+
+  /* Audio */
+  const audioUrl = data.music_info?.play||'';
+  const audioBtn = document.getElementById('dl-audio');
+  if(audioUrl){ audioBtn.href=audioUrl; audioBtn.style.display=''; }
+  else audioBtn.style.display='none';
+
+  /* Reset copy */
+  const cb=document.getElementById('copy-btn');
+  cb.classList.remove('copied');
+  document.getElementById('copy-text').textContent='Copiar enlace';
+
+  /* Stats */
+  const sts=[
+    {icon:'▶',val:data.play_count,lbl:'plays'},
+    {icon:'♥',val:data.digg_count,lbl:'likes'},
+    {icon:'◉',val:data.comment_count,lbl:'comments'},
+    {icon:'↗',val:data.share_count,lbl:'shares'},
+    {icon:'◷',val:data.duration?fmtDur(data.duration):null,lbl:'duración',raw:true},
+    {icon:'▣',val:isPhoto?data.images.length:null,lbl:'fotos',raw:true},
+  ].filter(s=>s.val);
+
+  document.getElementById('stats-bar').innerHTML=sts.map(s=>`
+    <div class="stat-item" title="${s.lbl}">
+      <span class="stat-sticker">${s.icon}</span>
+      <span class="stat-val">${s.raw?s.val:fmtNum(s.val)}</span>
+      <span>${s.lbl}</span>
+    </div>`).join('');
+}
+
+function renderVideo(data){
+  const wrap = document.getElementById('video-wrap');
+  wrap.innerHTML = `
+    <video id="video-player" controls playsinline preload="metadata"></video>
+    <span class="video-badge hd-badge" id="hd-badge" hidden>✦ HD</span>
+    <span class="video-badge duration-badge" id="dur-badge" hidden></span>`;
+
+  noWmUrl = data.play||data.hdplay||'';
+  const player = document.getElementById('video-player');
+  player.src    = noWmUrl;
+  player.poster = data.cover||'';
+  player.onerror = function(){
+    this.style.display='none';
+    const img = document.createElement('img');
+    img.src=data.cover||''; img.className='thumb-fallback'; img.alt='Miniatura';
+    wrap.appendChild(img);
+  };
+
+  document.getElementById('hd-badge').hidden = !data.hdplay;
+  const db = document.getElementById('dur-badge');
+  if(data.duration){ db.textContent='⏱ '+fmtDur(data.duration); db.hidden=false; }
+  else db.hidden=true;
+
+  /* Buttons: show video buttons, hide photo buttons */
+  document.getElementById('dl-nowm').style.display = '';
+  document.getElementById('dl-nowm').href = noWmUrl;
+  document.getElementById('dl-wm').style.display   = '';
+  document.getElementById('dl-wm').href   = data.wmplay||noWmUrl;
+  const photoBtn = document.getElementById('dl-photos');
+  if(photoBtn) photoBtn.style.display = 'none';
+  document.getElementById('dl-all-photos').style.display = 'none';
+  document.getElementById('copy-btn').style.display = '';
+  showWmButton();
+}
+
+function renderPhotoCarousel(data){
+  const images = data.images; // array of URLs
+  noWmUrl = images[0]||'';
+
+  const wrap = document.getElementById('video-wrap');
+  const dots = images.map((_,i)=>`<span class="carousel-dot${i===0?' active':''}" onclick="carouselGoTo(${i})"></span>`).join('');
+  wrap.innerHTML = `
+    <div class="carousel-wrap" style="width:100%">
+      <div class="carousel-track" id="carousel-track">
+        ${images.map(url=>`<div class="carousel-slide"><img src="${esc(url)}" alt="Foto" loading="lazy"></div>`).join('')}
+      </div>
+      ${images.length>1?`
+        <button class="carousel-btn prev" onclick="carouselMove(-1)">‹</button>
+        <button class="carousel-btn next" onclick="carouselMove(1)">›</button>
+        <div class="carousel-dots" id="carousel-dots">${dots}</div>
+        <div class="carousel-counter" id="carousel-counter">1 / ${images.length}</div>
+      `:''}
+      <span class="photo-badge">Fotos</span>
+    </div>`;
+
+  window._carouselIdx = 0;
+  window._carouselLen = images.length;
+  window._carouselImages = images;
+
+  /* Buttons: hide video-only buttons, show photo download */
+  document.getElementById('dl-nowm').style.display = 'none';
+  document.getElementById('dl-wm').style.display   = 'none';
+  document.getElementById('copy-btn').style.display = 'none';
+
+  const allPhotosBtn = document.getElementById('dl-all-photos');
+  allPhotosBtn.style.display = '';
+  allPhotosBtn.disabled = false;
+  allPhotosBtn.textContent = 'Descargar todas las fotos (' + images.length + ')';
+  showWmButton();
+}
+
+window.carouselMove = function(dir){
+  const len = window._carouselLen||1;
+  window._carouselIdx = ((window._carouselIdx||0) + dir + len) % len;
+  carouselApply();
+};
+window.carouselGoTo = function(i){
+  window._carouselIdx = i;
+  carouselApply();
+};
+function carouselApply(){
+  const idx = window._carouselIdx;
+  const len = window._carouselLen;
+  const track = document.getElementById('carousel-track');
+  if(track) track.style.transform = `translateX(-${idx*100}%)`;
+  const dots = document.querySelectorAll('.carousel-dot');
+  dots.forEach((d,i)=>d.classList.toggle('active',i===idx));
+  const counter = document.getElementById('carousel-counter');
+  if(counter) counter.textContent = `${idx+1} / ${len}`;
+  noWmUrl = (window._carouselImages||[])[idx]||noWmUrl;
+}
+
+/* ── Download all photos ── */
+async function downloadAllPhotos(){
+  const images = window._carouselImages;
+  if(!images||!images.length) return;
+  const btn = document.getElementById('dl-all-photos');
+  btn.disabled = true;
+  btn.textContent = 'Descargando...';
+
+  for(let i=0;i<images.length;i++){
+    try {
+      const res = await fetch(images[i]);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'foto_' + (i+1) + '.jpg';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      await new Promise(r=>setTimeout(r,400));
+    } catch {
+      /* Si falla CORS, abre en nueva pestaña */
+      const a = document.createElement('a');
+      a.href = images[i];
+      a.target = '_blank';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      await new Promise(r=>setTimeout(r,500));
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Descargar todas las fotos (' + images.length + ')';
+}
+
+/* ── Carousel swipe (touch) ── */
+(function(){
+  let startX=0, dragging=false;
+  document.addEventListener('touchstart',e=>{
+    const t=e.target.closest('.carousel-wrap');
+    if(!t) return;
+    startX=e.touches[0].clientX; dragging=true;
+  },{passive:true});
+  document.addEventListener('touchend',e=>{
+    if(!dragging) return; dragging=false;
+    const dx=e.changedTouches[0].clientX-startX;
+    if(Math.abs(dx)>40) carouselMove(dx<0?1:-1);
+  },{passive:true});
+})();
+
+window.expandDesc=function(btn){
+  const full=btn.getAttribute('data-full')||'';
+  const e=full.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const linked=e.replace(/#(\w+)/g,(_,tag)=>`<a class="hashtag" href="https://www.tiktok.com/tag/${tag}" target="_blank" rel="noopener">#${tag}</a>`);
+  btn.parentElement.innerHTML=linked;
+};
+
+/* ── Helpers ── */
+function setStatus(msg,type='info'){
+  const el=document.getElementById('status');
+  el.className='status '+(type==='error'?'error':'');
+  el.innerHTML=msg?(type==='info'&&msg.includes('…')?`<span class="spinner" style="border-top-color:var(--muted)"></span>${msg}`:msg):'';
+}
+function fmtNum(n){
+  if(!n) return '0';
+  if(n>=1e9) return (n/1e9).toFixed(1).replace(/\.0$/,'')+'G';
+  if(n>=1e6) return (n/1e6).toFixed(1).replace(/\.0$/,'')+'M';
+  if(n>=1e3) return (n/1e3).toFixed(1).replace(/\.0$/,'')+'K';
+  return String(n);
+}
+function fmtDur(s){ const m=Math.floor(s/60); return m+':'+(s%60).toString().padStart(2,'0'); }
+function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* Enter */
+document.getElementById('url-input').addEventListener('keydown',e=>{ if(e.key==='Enter') fetchVideo(); });
+
+/* ══════════════════════════════════════
+   WATERMARK ENGINE
+   ══════════════════════════════════════ */
+let _wmColor = '#ffffff';
+let _wmReady = false; // canvas has been drawn
+
+function toggleWmPanel(){
+  const panel = document.getElementById('wm-panel');
+  const btn   = document.getElementById('wm-toggle-btn');
+  const isOpen = panel.classList.contains('open');
+  panel.classList.toggle('open', !isOpen);
+  btn.classList.toggle('active', !isOpen);
+}
+
+function selectWmColor(el, color){
+  _wmColor = color;
+  document.querySelectorAll('.wm-color-dot').forEach(d=>d.classList.remove('selected'));
+  el.classList.add('selected');
+  wmPreviewLive();
+}
+
+function wmOpacityUpdate(){
+  const v = document.getElementById('wm-opacity').value;
+  document.getElementById('wm-opacity-val').textContent = v + '%';
+  wmPreviewLive();
+}
+
+/* Dibuja el canvas en vivo (ligero) */
+function wmPreviewLive(){
+  // Solo si ya hay canvas visible
+  if(_wmReady) applyWatermark(true);
+}
+
+/* Convierte hex a rgba con opacidad */
+function hexToRgba(hex, alpha){
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+async function applyWatermark(silent){
+  const text = document.getElementById('wm-text').value.trim();
+  if(!text){
+    if(!silent) alert('Escribe tu nombre o texto primero 👆');
+    return;
+  }
+
+  const font    = document.getElementById('wm-font').value;
+  const size    = parseInt(document.getElementById('wm-size').value);
+  const opacity = parseInt(document.getElementById('wm-opacity').value) / 100;
+  const color   = _wmColor;
+
+  const canvas  = document.getElementById('wm-canvas');
+  const wrap    = document.getElementById('wm-canvas-wrap');
+  const ctx     = canvas.getContext('2d');
+
+  /* ── Capturar frame del vídeo o imagen ── */
+  const video = document.getElementById('video-player');
+  let srcW, srcH, drawSource;
+
+  if(video && video.videoWidth){
+    // vídeo: usar el frame actual
+    srcW = video.videoWidth  || video.offsetWidth  || 720;
+    srcH = video.videoHeight || video.offsetHeight || 1280;
+    drawSource = video;
+  } else {
+    // imagen (thumb-fallback / carousel)
+    const img = document.querySelector('#video-wrap img, .carousel-slide img, .thumb-fallback');
+    if(!img){ if(!silent) alert('Espera a que el vídeo o imagen cargue.'); return; }
+    srcW = img.naturalWidth  || img.offsetWidth  || 720;
+    srcH = img.naturalHeight || img.offsetHeight || 1280;
+    drawSource = img;
+  }
+
+  canvas.width  = srcW;
+  canvas.height = srcH;
+
+  // Dibujar el frame original
+  try { ctx.drawImage(drawSource, 0, 0, srcW, srcH); }
+  catch(e){
+    // Cross-origin: pintar fondo negro con mensaje
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0,0,srcW,srcH);
+  }
+
+  /* ── Texto de marca de agua estilo edit ── */
+  const fontSize   = Math.round(size * (srcW / 390)); // escalar al canvas real
+  const fontWeight = '800';
+  ctx.font = `${fontWeight} ${fontSize}px ${font}`;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Medir texto
+  const metrics   = ctx.measureText(text);
+  const textW     = metrics.width;
+  const textH     = fontSize * 1.2;
+
+  // Posición: centro X, 78% de la altura (abajo-centro, estilo TikTok)
+  const posX = srcW / 2;
+  const posY = srcH * 0.78;
+
+  // ── Fondo blur / glassmorphism ──
+  const padX = fontSize * 0.6;
+  const padY = fontSize * 0.35;
+  const rx   = fontSize * 0.45; // border-radius simulado
+
+  // Sombra exterior suave
+  ctx.save();
+  ctx.shadowColor   = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur    = fontSize * 1.2;
+  ctx.shadowOffsetY = fontSize * 0.1;
+
+  // Gradiente de fondo semitransparente
+  const grad = ctx.createLinearGradient(
+    posX - textW/2 - padX, posY - textH/2 - padY,
+    posX + textW/2 + padX, posY + textH/2 + padY
+  );
+  grad.addColorStop(0,   `rgba(0,0,0,${opacity * 0.65})`);
+  grad.addColorStop(0.5, `rgba(0,0,0,${opacity * 0.45})`);
+  grad.addColorStop(1,   `rgba(0,0,0,${opacity * 0.65})`);
+
+  roundRect(ctx,
+    posX - textW/2 - padX,
+    posY - textH/2 - padY,
+    textW + padX*2,
+    textH + padY*2,
+    rx
+  );
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.restore();
+
+  // Borde sutil (glassmorphism)
+  ctx.save();
+  roundRect(ctx,
+    posX - textW/2 - padX,
+    posY - textH/2 - padY,
+    textW + padX*2,
+    textH + padY*2,
+    rx
+  );
+  ctx.strokeStyle = hexToRgba(color, opacity * 0.25);
+  ctx.lineWidth   = Math.max(1, fontSize * 0.04);
+  ctx.stroke();
+  ctx.restore();
+
+  // ── Texto principal ──
+  ctx.save();
+
+  // Sombra del texto
+  ctx.shadowColor   = 'rgba(0,0,0,0.9)';
+  ctx.shadowBlur    = fontSize * 0.5;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = fontSize * 0.06;
+
+  ctx.font          = `${fontWeight} ${fontSize}px ${font}`;
+  ctx.textAlign     = 'center';
+  ctx.textBaseline  = 'middle';
+  ctx.globalAlpha   = opacity;
+  ctx.fillStyle     = color;
+  ctx.fillText(text, posX, posY);
+
+  // Segunda capa: brillo/shimmer encima del texto
+  ctx.globalAlpha   = opacity * 0.18;
+  ctx.fillStyle     = '#ffffff';
+  ctx.fillText(text, posX, posY - fontSize * 0.04);
+
+  ctx.restore();
+
+  // ── Separador decorativo (líneas finas a los lados) ──
+  const lineLen = Math.min(srcW * 0.07, fontSize * 1.4);
+  const lineY   = posY;
+  const lineX1  = posX - textW/2 - padX - lineLen - fontSize*0.2;
+  const lineX2  = posX + textW/2 + padX + fontSize*0.2;
+
+  ctx.save();
+  ctx.globalAlpha = opacity * 0.5;
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = Math.max(1, fontSize * 0.05);
+  ctx.lineCap     = 'round';
+
+  ctx.beginPath(); ctx.moveTo(lineX1, lineY); ctx.lineTo(lineX1 + lineLen, lineY); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(lineX2, lineY); ctx.lineTo(lineX2 + lineLen, lineY); ctx.stroke();
+  ctx.restore();
+
+  // Mostrar canvas y botón descargar
+  wrap.classList.add('show');
+  document.getElementById('wm-dl-btn').classList.add('show');
+  _wmReady = true;
+}
+
+/* Polyfill roundRect para navegadores viejos */
+function roundRect(ctx, x, y, w, h, r){
+  if(ctx.roundRect){
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+}
+
+function downloadWatermarked(){
+  const canvas = document.getElementById('wm-canvas');
+  const text   = document.getElementById('wm-text').value.trim() || 'marca';
+  const link   = document.createElement('a');
+  link.download = 'tiktok_' + text.replace(/[^a-zA-Z0-9]/g,'_').slice(0,20) + '_marca.png';
+  link.href     = canvas.toDataURL('image/png');
+  link.click();
+}
+
+/* Mostrar el botón de marca de agua cuando hay vídeo */
+function showWmButton(){
+  const btn = document.getElementById('wm-toggle-btn');
+  btn.style.display = 'inline-flex';
+  // Resetear estado anterior
+  _wmReady = false;
+  document.getElementById('wm-canvas-wrap').classList.remove('show');
+  document.getElementById('wm-dl-btn').classList.remove('show');
+  document.getElementById('wm-panel').classList.remove('open');
+  document.getElementById('wm-toggle-btn').classList.remove('active');
+}
+
+
+/* ── Conectar con TikTok (Login Kit) ──
+   Rellena estos 2 valores después de crear tu app en developers.tiktok.com y desplegar worker.js */
+const TT_CLIENT_KEY = 'TU_CLIENT_KEY';
+const TT_BACKEND    = 'https://TU-WORKER.workers.dev'; // URL de tu worker.js
+function ttConnect(){
+  if (TT_CLIENT_KEY.startsWith('TU_')) { alert('Falta configurar TT_CLIENT_KEY y TT_BACKEND en el código.'); return; }
+  const state = crypto.getRandomValues(new Uint32Array(4)).join('-');
+  try { sessionStorage.setItem('tt-state', state); } catch(e){}
+  const p = new URLSearchParams({client_key:TT_CLIENT_KEY, scope:'user.info.basic', response_type:'code',
+    redirect_uri:TT_BACKEND+'/callback', state: state+'|'+encodeURIComponent(location.origin+location.pathname)});
+  location.href = 'https://www.tiktok.com/v2/auth/authorize/?' + p;
+}
+function ttShow(u){
+  document.getElementById('tt-connect').hidden = !!u;
+  const box = document.getElementById('tt-user'); box.hidden = !u;
+  if (u){ document.getElementById('tt-avatar').src = u.avatar || ''; document.getElementById('tt-name').textContent = u.name || 'Conectado'; }
+}
+function ttLogout(){ try{localStorage.removeItem('tt-user');}catch(e){} ttShow(null); }
+(function ttInit(){
+  const m = location.hash.match(/tt=([^&]+)/);
+  if (m){
+    try {
+      const u = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')))));
+      localStorage.setItem('tt-user', JSON.stringify(u));
+    } catch(e){}
+    history.replaceState(null,'',location.pathname+location.search);
+  }
+  try { const u = JSON.parse(localStorage.getItem('tt-user')||'null'); if (u) ttShow(u); } catch(e){}
+})();
+
+/* Init */
+renderHistory();
+</script>
+</body>
+</html>
